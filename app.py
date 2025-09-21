@@ -2262,14 +2262,9 @@ def index():
 if __name__ == '__main__':
     print("Starting Complete Enhanced Greenovators Smart Farming Assistant...")
     print("="*80)
-    print("ALL REQUESTED VALIDATIONS IMPLEMENTED")
-    print("• Pin Code: Exactly 6 digits validation")
-    print("• Crop Names: 100+ valid agricultural terms")  
-    print("• Image Upload: Strict agricultural content only")
-    print("• Land Size: Numbers only validation")
-    print("• Multi-language: English, Hindi, Marathi, Bengali")
-    print("• Recommendations: Ascending order by confidence")
-    print("="*80)
+    
+    # Get port from Railway environment
+    PORT = int(os.environ.get('PORT', 5000))
     
     # Initialize ML Model
     print("Initializing Enhanced ML Model...")
@@ -2278,10 +2273,9 @@ if __name__ == '__main__':
     else:
         print("Using fallback recommendations system")
     
-    print(f"Access the application at http://localhost:{PORT}")
-    print("Features: Smart validation, disease detection, profit analysis")
-    print("Security: Input sanitization, content validation, error handling")
+    print(f"Server will run on host: 0.0.0.0 port: {PORT}")
     print("="*80)
     
-    # Run with production settings
-    app.run(debug=app.config['DEBUG'], host='0.0.0.0', port=PORT)
+    # CRITICAL: Must bind to 0.0.0.0 and use Railway's PORT
+    app.run(debug=False, host='0.0.0.0', port=PORT)
+
