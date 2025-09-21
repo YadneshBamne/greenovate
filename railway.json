@@ -4,8 +4,7 @@
     "builder": "nixpacks"
   },
   "deploy": {
-    "numReplicas": 1,
-    "sleepApplication": false,
+    "startCommand": "gunicorn app:app --host 0.0.0.0 --port $PORT",
     "restartPolicyType": "ON_FAILURE"
   }
 }
