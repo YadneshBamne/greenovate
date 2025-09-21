@@ -17,6 +17,9 @@ import io
 import time
 
 
+
+
+
 import os
 from flask import Flask, request, jsonify, render_template_string
 
@@ -34,6 +37,37 @@ def health():
 @app.route('/favicon.ico')
 def favicon():
     return '', 204
+# At the top, make these global
+model = None
+scaler = None
+lecrop = None
+model_initialized = False
+
+def lazy_initialize_ml_model():
+    """Initialize ML model only when needed"""
+    global model, scaler, lecrop, model_initialized
+    
+    if model_initialized:
+        return True
+        
+    try:
+        print("Lazy loading ML model...")
+        # Your existing initialize_ml_model() code here
+        # ... (copy the actual initialization code)
+        model_initialized = True
+        return True
+    except Exception as e:
+        print(f"ML model lazy load failed: {e}")
+        return False
+
+# Update your crop recommendation route
+@app.route('/api/crop-recommendation', methods=['POST'])
+def get_crop_recommendation():
+    # Initialize ML model on first API call
+    if not model_initialized:
+        lazy_initialize_ml_model()
+    
+    # Rest of your existing code...
 
 
 # ================================
