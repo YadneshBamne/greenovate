@@ -1031,50 +1031,50 @@ def get_fertilizer_recommendations(crop_name):
 # API ROUTES WITH ENHANCED VALIDATION
 # ================================
 
-@app.route('/api/crop-recommendation', methods=['POST'])
-def crop_recommendation():
-    """Crop recommendation with validation"""
-    try:
-        data = request.json
-        language = data.get('language', 'english')
+# @app.route('/api/crop-recommendation', methods=['POST'])
+# def crop_recommendation():
+#     """Crop recommendation with validation"""
+#     try:
+#         data = request.json
+#         language = data.get('language', 'english')
         
-        # Validate pincode
-        is_valid, message = validate_pincode(data.get('pincode', ''))
-        if not is_valid:
-            return jsonify({
-                'success': False,
-                'message': translate_text('error_invalid_pincode', language)
-            })
+#         # Validate pincode
+#         is_valid, message = validate_pincode(data.get('pincode', ''))
+#         if not is_valid:
+#             return jsonify({
+#                 'success': False,
+#                 'message': translate_text('error_invalid_pincode', language)
+#             })
         
-        # Validate crop name
-        is_valid, message = validate_crop_name(data.get('past_crop', ''))
-        if not is_valid:
-            return jsonify({
-                'success': False,
-                'message': translate_text('error_invalid_crop', language)
-            })
+#         # Validate crop name
+#         is_valid, message = validate_crop_name(data.get('past_crop', ''))
+#         if not is_valid:
+#             return jsonify({
+#                 'success': False,
+#                 'message': translate_text('error_invalid_crop', language)
+#             })
         
-        # Get data and predictions
-        latitude, longitude, location = get_coordinates_from_pincode(data.get('pincode'))
-        weather_data = get_weather_data(latitude, longitude)
-        soil_data = get_soil_data(latitude, longitude)
+#         # Get data and predictions
+#         latitude, longitude, location = get_coordinates_from_pincode(data.get('pincode'))
+#         weather_data = get_weather_data(latitude, longitude)
+#         soil_data = get_soil_data(latitude, longitude)
         
-        input_params = {
-            'N': soil_data.get('N', 50), 'P': soil_data.get('P', 30), 'K': soil_data.get('K', 40),
-            'temperature': weather_data.get('temperature', 25), 'humidity': weather_data.get('humidity', 70),
-            'ph': soil_data.get('ph', 6.5), 'rainfall': weather_data.get('rainfall', 100)
-        }
+#         input_params = {
+#             'N': soil_data.get('N', 50), 'P': soil_data.get('P', 30), 'K': soil_data.get('K', 40),
+#             'temperature': weather_data.get('temperature', 25), 'humidity': weather_data.get('humidity', 70),
+#             'ph': soil_data.get('ph', 6.5), 'rainfall': weather_data.get('rainfall', 100)
+#         }
         
-        recommendations = enhanced_crop_prediction(input_params)
+#         recommendations = enhanced_crop_prediction(input_params)
         
-        return jsonify({
-            'success': True, 'recommendations': recommendations,
-            'weather': weather_data, 'soil': soil_data,
-            'message': translate_text('recommendations_generated', language)
-        })
+#         return jsonify({
+#             'success': True, 'recommendations': recommendations,
+#             'weather': weather_data, 'soil': soil_data,
+#             'message': translate_text('recommendations_generated', language)
+#         })
     
-    except Exception as e:
-        return jsonify({'success': False, 'message': f"Error: {str(e)}"})
+#     except Exception as e:
+#         return jsonify({'success': False, 'message': f"Error: {str(e)}"})
 
 @app.route('/api/profit-analysis', methods=['POST'])
 def profit_analysis():
