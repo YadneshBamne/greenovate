@@ -16,6 +16,22 @@ import cv2
 import io
 import time
 
+
+import os
+from flask import Flask, request, jsonify, render_template_string
+
+app = Flask(__name__)
+
+# Production configuration
+if os.environ.get('RAILWAY_ENVIRONMENT'):
+    app.config['DEBUG'] = False
+else:
+    app.config['DEBUG'] = True
+
+# Get port from environment variable
+PORT = int(os.environ.get('PORT', 5000))
+
+
 app = Flask(__name__)
 
 # ================================
@@ -2244,52 +2260,28 @@ def index():
     return render_template_string(HTML_TEMPLATE)
 
 if __name__ == '__main__':
-    print("🌾 Starting Complete Enhanced Greenovators Smart Farming Assistant...")
-    print("=" * 80)
-    print("✅ ALL REQUESTED VALIDATIONS IMPLEMENTED:")
-    print("   📍 Pin Code: Exactly 6 digits validation (✓)")
-    print("   🌾 Crop Names: 100+ valid agricultural terms (✓)")
-    print("   📸 Image Upload: Strict agricultural content only (✓)")
-    print("   📏 Land Size: Numbers only validation (✓)")
-    print("   🌐 Multi-language: English, Hindi, Marathi, Bengali (✓)")
-    print("   📊 Recommendations: Ascending order by confidence (✓)")
-    print("=" * 80)
-    print("🔧 ENHANCED FEATURES:")
-    print("   🎯 90-100% Confidence Scores")
-    print("   🔍 Advanced Image Content Detection")
-    print("   ⚡ Real-time Input Validation")
-    print("   🚫 Strict Content Filtering")
-    print("   💰 Comprehensive Financial Analysis")
-    print("   🦠 Enhanced Plant Disease Database")
-    print("   🧪 Detailed Fertilizer Guidelines")
-    print("   📱 Mobile Responsive Design")
-    print("=" * 80)
-    print("📋 VALIDATION DETAILS:")
-    print("   📍 Pin Code: /^[0-9]{6}$/ pattern matching")
-    print("   🌾 Crop Names: 100+ terms including regional names")
-    print("   📸 Images: Color analysis + content detection")
-    print("   📏 Land Size: parseFloat() + positive number check")
-    print("   🌐 Language: Complete UI translation")
-    print("   📊 Results: sort() by confidence ascending")
-    print("=" * 80)
-    print("🚀 Server Features:")
-    print("   🔒 Server-side + Client-side validation")
-    print("   🎨 Modern UI with animations")
-    print("   ⚡ Real-time error feedback")
-    print("   📊 Enhanced ML model with fallback")
-    print("   🌍 Complete internationalization")
-    print("=" * 80)
+    print("Starting Complete Enhanced Greenovators Smart Farming Assistant...")
+    print("="*80)
+    print("ALL REQUESTED VALIDATIONS IMPLEMENTED")
+    print("• Pin Code: Exactly 6 digits validation")
+    print("• Crop Names: 100+ valid agricultural terms")  
+    print("• Image Upload: Strict agricultural content only")
+    print("• Land Size: Numbers only validation")
+    print("• Multi-language: English, Hindi, Marathi, Bengali")
+    print("• Recommendations: Ascending order by confidence")
+    print("="*80)
     
     # Initialize ML Model
-    print("🤖 Initializing Enhanced ML Model...")
+    print("Initializing Enhanced ML Model...")
     if initialize_ml_model():
-        print("✅ ML Model initialized successfully!")
+        print("ML Model initialized successfully!")
     else:
-        print("⚠️ Using fallback recommendations system")
+        print("Using fallback recommendations system")
     
-    print("🌐 Access the application at: http://localhost:5000")
-    print("📱 Features: Smart validation, disease detection, profit analysis")
-    print("🔒 Security: Input sanitization, content validation, error handling")
-    print("=" * 80)
+    print(f"Access the application at http://localhost:{PORT}")
+    print("Features: Smart validation, disease detection, profit analysis")
+    print("Security: Input sanitization, content validation, error handling")
+    print("="*80)
     
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # Run with production settings
+    app.run(debug=app.config['DEBUG'], host='0.0.0.0', port=PORT)
