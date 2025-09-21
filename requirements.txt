@@ -1,0 +1,29 @@
+# Core Flask Framework
+Flask==3.0.0
+Werkzeug==3.0.1
+
+# Machine Learning and Data Science
+scikit-learn==1.5.1
+numpy==1.26.4
+pandas==2.2.2
+joblib==1.4.2
+
+# Image Processing
+opencv-python==4.10.0.84
+Pillow==10.4.0
+
+# HTTP Requests
+requests==2.32.3
+
+# Production Server (for deployment)
+gunicorn==22.0.0
+
+# Additional ML dependencies that scikit-learn might need
+scipy==1.13.1
+threadpoolctl==3.5.0
+
+# Optional: For better performance with large datasets
+# numba==0.60.0
+
+# Optional: For model persistence
+# pickle-mixin==1.0.2
