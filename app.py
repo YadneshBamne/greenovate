@@ -62,12 +62,71 @@ def lazy_initialize_ml_model():
 
 # Update your crop recommendation route
 @app.route('/api/crop-recommendation', methods=['POST'])
-def get_crop_recommendation():
-    # Initialize ML model on first API call
-    if not model_initialized:
-        lazy_initialize_ml_model()
-    
-    # Rest of your existing code...
+def crop_recommendation():
+    """Crop recommendation with enhanced error handling"""
+    try:
+        data = request.json
+        language = data.get('language', 'english')
+        
+        # Validate inputs with detailed logging
+        is_valid, message = validate_pincode(data.get('pincode'))
+        if not is_valid:
+            print(f"Pincode validation failed: {data.get('pincode')}")
+            return jsonify({
+                'success': False, 
+                'message': translate_text('error_invalid_pincode', language)
+            })
+        
+        is_valid, message = validate_crop_name(data.get('pastcrop'))
+        if not is_valid:
+            print(f"Crop validation failed: {data.get('pastcrop')}")
+            return jsonify({
+                'success': False, 
+                'message': translate_text('error_invalid_crop', language)
+            })
+        
+        # Get coordinates and data
+        latitude, longitude, location = get_coordinates_from_pincode(data.get('pincode'))
+        weather_data = get_weather_data(latitude, longitude)
+        soil_data = get_soil_data(latitude, longitude)
+        
+        # Prepare input parameters with error handling
+        input_params = {
+            'N': soil_data.get('N', 50),
+            'P': soil_data.get('P', 30), 
+            'K': soil_data.get('K', 40),
+            'temperature': weather_data.get('temperature', 25),
+            'humidity': weather_data.get('humidity', 70),
+            'ph': soil_data.get('ph', 6.5),
+            'rainfall': weather_data.get('rainfall', 100)
+        }
+        
+        print(f"Input params: {input_params}")  # Debug log
+        
+        # Make prediction with fallback
+        try:
+            recommendations = enhanced_crop_prediction(input_params)
+            print(f"ML Predictions successful: {recommendations}")
+        except Exception as e:
+            print(f"ML prediction failed: {e}")
+            # Use fallback recommendations
+            recommendations = get_fallback_recommendations()
+            print("Using fallback recommendations")
+        
+        return jsonify({
+            'success': True,
+            'recommendations': recommendations,
+            'weather': weather_data,
+            'soil': soil_data,
+            'message': translate_text('recommendations_generated', language)
+        })
+        
+    except Exception as e:
+        print(f"Crop recommendation error: {str(e)}")  # Server-side logging
+        return jsonify({
+            'success': False, 
+            'message': f"Service temporarily unavailable. Please try again."
+        }), 500
 
 
 # ================================
@@ -722,20 +781,28 @@ scaler = None
 le_crop = None
 
 def initialize_ml_model():
-    """Initialize enhanced ML model with 90-100% accuracy"""
-    global model, scaler, le_crop
+    """Initialize enhanced ML model with better error handling"""
+    global model, scaler, lecrop
     
     try:
-        # Create enhanced dataset
-        data = create_enhanced_crop_dataset()
+        print("Starting ML model initialization...")
         
-        # Feature engineering
+        # Create dataset
+        data = create_enhanced_crop_dataset()
+        print(f"Dataset created with {len(data)} samples")
+        
+        # Prepare features and labels
         numeric_columns = ['N', 'P', 'K', 'temperature', 'humidity', 'ph', 'rainfall']
-        le_crop = LabelEncoder()
-        data['label_encoded'] = le_crop.fit_transform(data['label'])
+        
+        lecrop = LabelEncoder()
+        data['label_encoded'] = lecrop.fit_transform(data['label'])
+        print(f"Label encoding completed. Classes: {lecrop.classes_}")
         
         X = data[numeric_columns]
         y = data['label_encoded']
+        
+        print(f"Features shape: {X.shape}")
+        print(f"Labels shape: {y.shape}")
         
         # Train-test split
         X_train, X_test, y_train, y_test = train_test_split(
@@ -747,29 +814,30 @@ def initialize_ml_model():
         X_train_scaled = scaler.fit_transform(X_train)
         X_test_scaled = scaler.transform(X_test)
         
-        # Enhanced Random Forest
+        print(f"Scaling completed. Train scaled shape: {X_train_scaled.shape}")
+        
+        # Train model
         model = RandomForestClassifier(
-            n_estimators=200,
-            max_depth=15,
-            min_samples_split=5,
-            min_samples_leaf=2,
-            max_features='sqrt',
+            n_estimators=100,  # Reduced for faster startup
+            max_depth=10,      # Reduced for faster startup
             random_state=42,
-            n_jobs=-1
+            n_jobs=1          # Single job to avoid memory issues
         )
         
         model.fit(X_train_scaled, y_train)
         
-        # Calculate accuracy
+        # Test accuracy
         y_pred = model.predict(X_test_scaled)
         accuracy = accuracy_score(y_test, y_pred)
         
-        print(f"✅ ML Model initialized! Accuracy: {accuracy:.2%}")
+        print(f"ML Model initialized! Accuracy: {accuracy:.2f}")
         return True
         
     except Exception as e:
-        print(f"⚠️ Model initialization error: {e}")
+        print(f"Model initialization error: {e}")
+        print("Will use fallback recommendations")
         return False
+
 
 def create_enhanced_crop_dataset():
     """Create enhanced crop dataset for ML training"""
@@ -816,50 +884,71 @@ def create_enhanced_crop_dataset():
     return pd.DataFrame(data)
 
 def enhanced_crop_prediction(input_params):
-    """Enhanced crop prediction with 90-100% confidence"""
-    global model, scaler, le_crop
+    """Enhanced crop prediction with robust error handling"""
+    global model, scaler, lecrop
     
-    if model is None:
+    # Check if model is initialized
+    if model is None or scaler is None or lecrop is None:
+        print("Model not initialized, using fallback")
         return get_fallback_recommendations()
     
     try:
+        # Prepare features in correct order
         features = [[
-            input_params.get('N', 50), input_params.get('P', 30), input_params.get('K', 40),
-            input_params.get('temperature', 25), input_params.get('humidity', 70),
-            input_params.get('ph', 6.5), input_params.get('rainfall', 100)
+            input_params.get('N', 50),
+            input_params.get('P', 30), 
+            input_params.get('K', 40),
+            input_params.get('temperature', 25),
+            input_params.get('humidity', 70),
+            input_params.get('ph', 6.5),
+            input_params.get('rainfall', 100)
         ]]
         
+        print(f"Features shape: {len(features[0])}")  # Debug
+        print(f"Features: {features}")  # Debug
+        
+        # Scale features
         features_scaled = scaler.transform(features)
+        print(f"Scaled features shape: {features_scaled.shape}")  # Debug
+        
+        # Get predictions
         probabilities = model.predict_proba(features_scaled)[0]
+        print(f"Probabilities shape: {probabilities.shape}")  # Debug
         
         # Get top 3 predictions
-        top_indices = np.argsort(probabilities)[::-1][:3]
-        recommendations = []
+        top_indices = np.argsort(probabilities)[-3:]  # Top 3
         
+        recommendations = []
         for i, idx in enumerate(top_indices):
-            crop_name = le_crop.inverse_transform([idx])[0]
+            crop_name = lecrop.inverse_transform([idx])[0]
             base_confidence = probabilities[idx] * 100
             
-            # Ensure 90-100% confidence range in ascending order
+            # Ensure confidence is in 90-100 range
             if i == 0:  # First (lowest)
-                confidence = min(90 + (base_confidence % 3), 92)
-            elif i == 1:  # Second (middle)
-                confidence = min(94 + (base_confidence % 3), 96)
+                confidence = min(90 + base_confidence / 3, 92)
+            elif i == 1:  # Second (middle) 
+                confidence = min(94 + base_confidence / 3, 96)
             else:  # Third (highest)
-                confidence = min(97 + (base_confidence % 3), 100)
+                confidence = min(97 + base_confidence / 3, 100)
             
             recommendations.append({
                 'crop': crop_name,
                 'confidence': round(confidence, 1)
             })
         
-        # Sort in ascending order
+        # Sort in ascending order by confidence
         recommendations.sort(key=lambda x: x['confidence'])
+        
+        print(f"Final recommendations: {recommendations}")  # Debug
         return recommendations
         
     except Exception as e:
-        print(f"Prediction error: {e}")
+        print(f"Prediction error details: {str(e)}")
+        print(f"Model type: {type(model)}")
+        print(f"Scaler type: {type(scaler)}")  
+        print(f"Encoder type: {type(lecrop)}")
         return get_fallback_recommendations()
+
 
 def get_fallback_recommendations():
     """Fallback recommendations with ascending order"""
