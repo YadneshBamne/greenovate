@@ -22,17 +22,19 @@ from flask import Flask, request, jsonify, render_template_string
 
 app = Flask(__name__)
 
-# Production configuration
-if os.environ.get('RAILWAY_ENVIRONMENT'):
-    app.config['DEBUG'] = False
-else:
-    app.config['DEBUG'] = True
-
-# Get port from environment variable
+# Railway port configuration - CRITICAL
 PORT = int(os.environ.get('PORT', 5000))
+HOST = '0.0.0.0'
 
+# Add a simple health check
+@app.route('/health')
+def health():
+    return {'status': 'healthy', 'port': PORT}, 200
 
-app = Flask(__name__)
+@app.route('/favicon.ico')
+def favicon():
+    return '', 204
+
 
 # ================================
 # ENHANCED VALIDATION FUNCTIONS WITH ERROR HANDLING
@@ -2260,22 +2262,19 @@ def index():
     return render_template_string(HTML_TEMPLATE)
 
 if __name__ == '__main__':
-    print("Starting Complete Enhanced Greenovators Smart Farming Assistant...")
-    print("="*80)
+    print(f"Starting server on {HOST}:{PORT}")
     
-    # Get port from Railway environment
-    PORT = int(os.environ.get('PORT', 5000))
+    # Initialize ML model with error handling
+    try:
+        if initialize_ml_model():
+            print("ML Model initialized successfully!")
+        else:
+            print("Using fallback recommendations system")
+    except Exception as e:
+        print(f"ML Model initialization failed: {e}")
+        print("Continuing with basic functionality")
     
-    # Initialize ML Model
-    print("Initializing Enhanced ML Model...")
-    if initialize_ml_model():
-        print("ML Model initialized successfully!")
-    else:
-        print("Using fallback recommendations system")
-    
-    print(f"Server will run on host: 0.0.0.0 port: {PORT}")
-    print("="*80)
-    
-    # CRITICAL: Must bind to 0.0.0.0 and use Railway's PORT
-    app.run(debug=False, host='0.0.0.0', port=PORT)
+    # CRITICAL: Must use Railway's PORT and bind to 0.0.0.0
+    app.run(debug=False, host=HOST, port=PORT, threaded=True)
+
 
